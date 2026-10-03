@@ -1,0 +1,14 @@
+name: gitleaks
+description: >-
+  Scan the whole git history for secrets with the official gitleaks image (Moli standard 004, 4.7.3).
+  Not gitleaks-action, which needs a paid license for organizations. Per-file false positives go in
+  the repository's .gitleaks.toml.
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      with:
+        fetch-depth: 0
+    - name: Scan the full history
+      shell: bash
+      run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 detect --source /repo --redact --no-banner

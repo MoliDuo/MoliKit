@@ -1,0 +1,30 @@
+name: verified
+description: >-
+  On a push to main, tell whether the merge queue already tested this exact commit, so the checks
+  need not run again (Moli standard 004, 4.6b). Output skip is "true" or "false".
+inputs:
+  github-token:
+    description: 'Token that may read workflow runs (the job needs permissions: actions: read).'
+    default: ${{ github.token }}
+  workflow:
+    description: Workflow file whose merge_group runs count.
+    default: ci.yml
+outputs:
+  skip:
+    description: '"true" when a successful merge_group run exists for this commit.'
+    value: ${{ steps.queue.outputs.skip }}
+runs:
+  using: composite
+  steps:
+    - id: queue
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        WORKFLOW: ${{ inputs.workflow }}
+      run: |
+        skip=false
+        if [ "$GITHUB_EVENT_NAME" = push ]; then
+          n=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/$WORKFLOW/runs?head_sha=$GITHUB_SHA&event=merge_group&status=success&per_page=1" --jq .total_count)
+          if [ "$n" -gt 0 ]; then skip=true; fi
+        fi
+        echo "skip=$skip" >> "$GITHUB_OUTPUT"

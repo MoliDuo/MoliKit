@@ -1,0 +1,24 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ["*"]
+  # The actions in actions/*/action.yml pin third-party actions too.
+  - package-ecosystem: github-actions
+    directory: /actions/deploy
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+  - package-ecosystem: github-actions
+    directory: /actions/gitleaks
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7

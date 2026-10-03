@@ -1,0 +1,13 @@
+name: MoliKit
+id: kit
+kind: tool
+level: L1
+
+deploy:
+  platform: none
+
+data:
+  db: none
+
+release:
+  kind: library

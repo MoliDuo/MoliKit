@@ -1,0 +1,25 @@
+name: ci-gate
+description: >-
+  Aggregate the results of the other jobs into one pass or fail (Moli standard 004, 4.3). Run it in
+  a job named ci-gate with `if: always()` and `needs` listing every other job.
+inputs:
+  needs:
+    description: 'Pass ${{ toJSON(needs) }}.'
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        NEEDS: ${{ inputs.needs }}
+      run: |
+        results=$(jq -r '[.[].result] | join(" ")' <<<"$NEEDS")
+        echo "Job results: $results"
+        if [ "$(jq -r '.verified.outputs.skip // "false"' <<<"$NEEDS")" = true ]; then
+          echo "Already tested by the merge queue at this commit."
+          [ "$(jq -r '.verified.result' <<<"$NEEDS")" = success ]
+        else
+          case " $results " in
+            *" failure "*|*" cancelled "*|*" skipped "*) echo "A job did not succeed."; exit 1 ;;
+          esac
+        fi
