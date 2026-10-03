@@ -1,6 +1,6 @@
 name: deploy
 description: >-
-  Build the image of one commit, join the tailnet for this run only, and send the image to the
+  Deploy a commit only if it is still the newest on the branch (older ones are skipped). Build the image, join the tailnet for this run only, and send the image to the
   server's deploy entry over SSH (Moli standard 005). Call it from a workflow that runs after a green
   ci on main, in a job with `permissions: contents: read`. Secrets come in as inputs.
 inputs:
@@ -28,17 +28,43 @@ inputs:
   tailscale-client-secret:
     description: The DEPLOY_TAILSCALE_CLIENT_SECRET secret.
     required: true
+  branch:
+    description: The branch that deploys. Only its newest commit is deployed.
+    default: main
+  github-token:
+    description: Token that may read the repository's commits.
+    default: ${{ github.token }}
 runs:
   using: composite
   steps:
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+    # A slow or re-run CI must not put an older commit on top of a newer one
+    - id: latest
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        BRANCH: ${{ inputs.branch }}
+        SHA: ${{ inputs.sha }}
+      run: |
+        set -euo pipefail
+        head=$(gh api "repos/$GITHUB_REPOSITORY/commits/$BRANCH" --jq .sha)
+        if [ "$head" = "$SHA" ]; then
+          echo "latest=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "latest=false" >> "$GITHUB_OUTPUT"
+          echo "::notice::Skipped: $SHA is not the newest commit on $BRANCH ($head)."
+        fi
+
+    - if: steps.latest.outputs.latest == 'true'
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       with:
         ref: ${{ inputs.sha }}
 
-    - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+    - if: steps.latest.outputs.latest == 'true'
+      uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
     # Build once; the image is tagged with the commit sha, never latest
-    - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+    - if: steps.latest.outputs.latest == 'true'
+      uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
       with:
         context: .
         build-args: VERSION=${{ inputs.sha }}
@@ -48,13 +74,15 @@ runs:
         cache-to: type=gha,mode=max
 
     # Join the tailnet for this run only; the access rules allow only the server SSH port
-    - uses: tailscale/github-action@6cae46e2d796f265265cfcf628b72a32b4d7cade # v3
+    - if: steps.latest.outputs.latest == 'true'
+      uses: tailscale/github-action@6cae46e2d796f265265cfcf628b72a32b4d7cade # v3
       with:
         oauth-client-id: ${{ inputs.tailscale-client-id }}
         oauth-secret: ${{ inputs.tailscale-client-secret }}
         tags: tag:github-deploy
 
     - name: Send the image and deploy
+      if: steps.latest.outputs.latest == 'true'
       shell: bash
       env:
         APP: ${{ inputs.app }}
