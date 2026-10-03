@@ -1,0 +1,31 @@
+name: auto-merge
+description: >-
+  Turn on auto-merge for a pull request as the Moli merge App, so it joins the merge queue once
+  ci-gate is green (Moli standard 003). Call it from a pull_request workflow, in a job that skips
+  drafts, forks and pull requests that do not target the default branch. The App credentials come in
+  as inputs.
+inputs:
+  app-id:
+    description: The AUTOMERGE_APP_ID secret.
+    required: true
+  private-key:
+    description: The AUTOMERGE_APP_PRIVATE_KEY secret.
+    required: true
+  pull-request:
+    description: Pull request number.
+    required: true
+runs:
+  using: composite
+  steps:
+    # Not GITHUB_TOKEN: auto-merge turned on with it is accepted and then never enqueues
+    - id: app
+      uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+      with:
+        app-id: ${{ inputs.app-id }}
+        private-key: ${{ inputs.private-key }}
+
+    - shell: bash
+      env:
+        GH_TOKEN: ${{ steps.app.outputs.token }}
+        PR: ${{ inputs.pull-request }}
+      run: gh pr merge "$PR" --auto --repo "$GITHUB_REPOSITORY"

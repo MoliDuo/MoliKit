@@ -16,6 +16,7 @@ Moli 各仓库共用的、可以公开的 GitHub Actions 步骤：密钥扫描�
 | `actions/ci-gate` | 汇总其他任务的结果，任何一个失败、取消或意外跳过就失败 |
 | `actions/gitleaks` | 用官方镜像扫描全部历史里的密钥 |
 | `actions/deploy` | 只在该提交仍是 main 最新时：构建镜像，临时加入内网，经 SSH 送到服务器并部署；不是最新就跳过 |
+| `actions/auto-merge` | 给 PR 打开自动合并（以专用 App 的身份），绿了就自动进合并队列 |
 
 ## 安装或访问
 
