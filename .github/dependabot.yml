@@ -22,3 +22,9 @@ updates:
       interval: monthly
     cooldown:
       default-days: 7
+  - package-ecosystem: github-actions
+    directory: /actions/auto-merge
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
