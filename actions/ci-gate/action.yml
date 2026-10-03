@@ -4,7 +4,7 @@ description: >-
   a job named ci-gate with `if: always()` and `needs` listing every other job.
 inputs:
   needs:
-    description: 'Pass ${{ toJSON(needs) }}.'
+    description: Pass the toJSON of the needs context (see the README).
     required: true
 runs:
   using: composite
