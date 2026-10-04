@@ -79,6 +79,7 @@ runs:
         oauth-client-id: ${{ inputs.tailscale-client-id }}
         oauth-secret: ${{ inputs.tailscale-client-secret }}
         tags: tag:github-deploy
+        use-cache: 'false' # no Actions caches (standard 004, 4.6.7)
 
     - name: Send the image and deploy
       if: steps.latest.outputs.latest == 'true'
