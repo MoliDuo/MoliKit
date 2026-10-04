@@ -28,7 +28,6 @@ These rules apply to every Moli repository. The full standards live in the priva
 - Sign-in is Authelia only. Do not build your own accounts, passwords or registration pages.
 - Database and settings schemas only add; never delete or rename an existing field in one step. Migrations must keep the previous app version working.
 - Clients are offline-first and the server is authoritative. Settings are read in the order defined in the config standard; do not invent a second source.
-- Show every time a person reads (UI, notifications, emails, exports, logs, docs) in Singapore time (`Asia/Singapore`, UTC+8), whatever the viewer's time zone. How times are stored is not restricted.
 - Server apps expose `GET /healthz` returning `{"ok": true, "version": "<commit sha>"}`, run as non-root, take config from environment variables, and publish no host ports.
 
 **Working with the user**
